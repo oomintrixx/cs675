@@ -6,9 +6,42 @@
 ## Dataset
 
 - **NYC TLC Yellow Taxi** (2019–2022)
-- ~260 million trips
-- Public Parquet files from TLC open data portal
-- Local dev: Jan 2022 slice (~3M rows) for fast iteration
+- ~260 million trips · 19 columns · Parquet format
+- Public data from TLC open data portal
+- Local dev: Jan 2022 slice (~2.5M rows, 37 MB)
+
+### Raw Columns (19 total)
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `tpep_pickup_datetime` | timestamp | Trip start time |
+| `tpep_dropoff_datetime` | timestamp | Trip end time |
+| `passenger_count` | float | Number of passengers (2.9% null) |
+| `trip_distance` | float | Distance in miles |
+| `PULocationID` | int | Pickup zone ID (1–265) |
+| `DOLocationID` | int | Dropoff zone ID (1–265) |
+| `payment_type` | int | 1=credit card, 2=cash, 3=no charge, 4=dispute |
+| `fare_amount` | float | Metered fare |
+| `tip_amount` | float | Tip (only populated for credit card payments) |
+| `total_amount` | float | Fare + tip + tolls + surcharges |
+| `congestion_surcharge` | float | NYC congestion pricing fee (2.9% null) |
+| `airport_fee` | float | JFK/LGA airport fee (2.9% null) |
+| `VendorID`, `RatecodeID`, `extra`, `mta_tax`, `tolls_amount`, `improvement_surcharge`, `store_and_fwd_flag` | various | Vendor/tax metadata |
+
+### Key Data Facts (Jan 2022 sample)
+
+| Stat | Value |
+|------|-------|
+| Total trips | 2,463,931 |
+| Median trip distance | 1.74 miles |
+| Trips under 3 miles | 72.6% |
+| Avg fare | $12.95 |
+| Avg total amount | $19.17 |
+| Credit card payments | 76.1% |
+| Cash payments | 20.1% |
+| Peak demand hours | 5pm – 7pm |
+| Rows with distance = 0 | 29,373 (1.2%) — dropped |
+| Rows with negative fare | 12,733 (0.5%) — dropped |
 
 ---
 
@@ -35,12 +68,82 @@
 
 ## Analytics Queries (Step 00)
 
-| # | Query | Insight |
-|---|-------|---------|
-| Q1 | Trip count by hour × day of week | Identifies commute peaks vs weekend leisure patterns |
-| Q2 | Revenue and trip count by pickup zone | Shows highest-value zones for drivers |
-| Q3 | Average tip % by distance bucket | Tests whether longer trips earn proportionally more |
-| Q4 | Fare per mile by distance bucket | Quantifies base-fare effect on short trips |
+### Q1 — Trip Demand by Hour and Day of Week
+
+**Columns used:** `tpep_pickup_datetime` → derived `pickup_hour`, `day_of_week`
+
+```sql
+SELECT
+    HOUR(tpep_pickup_datetime)      AS pickup_hour,
+    DAY_OF_WEEK(tpep_pickup_datetime) AS day_of_week,
+    COUNT(*)                        AS trip_count
+FROM yellow_taxi
+GROUP BY 1, 2
+ORDER BY 1, 2;
+```
+
+---
+
+### Q2 — Revenue by Pickup Zone
+
+**Columns used:** `PULocationID`, `fare_amount`
+
+```sql
+SELECT
+    PULocationID,
+    ROUND(SUM(fare_amount), 2)  AS total_revenue,
+    ROUND(AVG(fare_amount), 2)  AS avg_fare,
+    COUNT(*)                    AS trip_count
+FROM yellow_taxi
+GROUP BY PULocationID
+ORDER BY total_revenue DESC
+LIMIT 20;
+```
+
+---
+
+### Q3 — Tipping Behavior by Distance Bucket
+
+**Columns used:** `trip_distance` → derived `distance_bucket`, `tip_amount`, `fare_amount`
+
+```sql
+SELECT
+    CASE
+        WHEN trip_distance < 1  THEN 'short'
+        WHEN trip_distance <= 10 THEN 'medium'
+        ELSE 'long'
+    END                                           AS distance_bucket,
+    ROUND(AVG(tip_amount / fare_amount * 100), 2) AS avg_tip_pct,
+    ROUND(AVG(tip_amount), 2)                     AS avg_tip_amount,
+    COUNT(*)                                      AS trip_count
+FROM yellow_taxi
+WHERE fare_amount > 0
+GROUP BY 1
+ORDER BY 1;
+```
+
+---
+
+### Q4 — Fare Per Mile by Distance Bucket
+
+**Columns used:** `trip_distance` → derived `distance_bucket`, `fare_amount`
+
+```sql
+SELECT
+    CASE
+        WHEN trip_distance < 1  THEN 'short'
+        WHEN trip_distance <= 10 THEN 'medium'
+        ELSE 'long'
+    END                                              AS distance_bucket,
+    ROUND(AVG(fare_amount / trip_distance), 2)       AS avg_fare_per_mile,
+    ROUND(AVG(fare_amount), 2)                       AS avg_fare,
+    ROUND(AVG(trip_distance), 2)                     AS avg_distance,
+    COUNT(*)                                         AS trip_count
+FROM yellow_taxi
+WHERE trip_distance > 0
+GROUP BY 1
+ORDER BY 1;
+```
 
 ---
 
