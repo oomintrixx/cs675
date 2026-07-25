@@ -57,6 +57,21 @@
 
 ---
 
+## ML Extension (Step 02 — +10 bonus points)
+
+**Goal:** Predict `total_amount` (total revenue per trip) using PySpark MLlib.
+
+| | Model | Purpose |
+|-|-------|---------|
+| Baseline | Linear Regression | Simple interpretable benchmark |
+| Main | Gradient Boosted Trees | Captures non-linear zone + time patterns |
+
+**Features:** trip distance, pickup hour, day of week, passenger count, pickup zone, dropoff zone, payment type
+
+**Evaluation:** RMSE (dollars) + R² on 20% held-out test set. Compare baseline vs GBT.
+
+---
+
 ## Timeline
 
 | Date | Milestone |
@@ -64,8 +79,9 @@
 | Jul 25 (today) | Scope review ✓ |
 | Jul 26 | Preprocessing pipeline + unit tests done |
 | Jul 27 | 4 analytics queries + unit tests done |
+| Jul 28 | ML model (LR + GBT) locally trained and evaluated |
 | Jul 28 | Terraform infra applied, data uploaded to S3 |
-| Jul 29–30 | EMR Serverless cloud run, results collected |
+| Jul 29–30 | EMR Serverless cloud run (analytics + ML), results collected |
 | Jul 31 | README + results discussion finalized |
 | Aug 1 | **Final demo** |
 
