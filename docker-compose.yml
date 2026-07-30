@@ -1,5 +1,4 @@
 # docker-compose.yml
-version: "3.8"
 services:
   pyspark:
     image: jupyter/pyspark-notebook:spark-3.5.0
@@ -14,8 +13,8 @@ services:
     environment:
       - SPARK_MASTER=local[*]
       - JUPYTER_ENABLE_LAB=yes
-      - PYTHONPATH=/home/jovyan
-    command: start.sh jupyter lab --no-browser
+      - PYTHONPATH=/home/jovyan:/usr/local/spark/python:/usr/local/spark/python/lib/py4j-0.10.9.7-src.zip
+    command: bash -c "pip install -q pytest==8.2.0 && start.sh jupyter lab --no-browser"
   history:
     image: jupyter/pyspark-notebook:spark-3.5.0
     volumes:
