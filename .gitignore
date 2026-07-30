@@ -1,0 +1,6 @@
+infrastructure/terraform.tfvars
+infrastructure/.terraform/
+infrastructure/terraform.tfstate*
+infrastructure/.terraform.lock.hcl
+data/
+spark-events/
