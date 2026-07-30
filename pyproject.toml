@@ -1,0 +1,8 @@
+[project]
+name = "cs675-final"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "pyspark==3.5.0",
+    "pytest==8.2.0",
+]

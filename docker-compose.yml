@@ -1,0 +1,27 @@
+# docker-compose.yml
+version: "3.8"
+services:
+  pyspark:
+    image: jupyter/pyspark-notebook:spark-3.5.0
+    volumes:
+      - ./work:/home/jovyan/work
+      - ./tests:/home/jovyan/tests
+      - ./data:/home/jovyan/data
+      - ./spark-events:/tmp/spark-events
+    ports:
+      - "4040:4040"
+      - "18080:18080"
+    environment:
+      - SPARK_MASTER=local[*]
+      - JUPYTER_ENABLE_LAB=yes
+      - PYTHONPATH=/home/jovyan
+    command: start.sh jupyter lab --no-browser
+  history:
+    image: jupyter/pyspark-notebook:spark-3.5.0
+    volumes:
+      - ./spark-events:/tmp/spark-events
+    ports:
+      - "18081:18080"
+    command: bash -c "/usr/local/spark/sbin/start-history-server.sh && tail -f /dev/null"
+    environment:
+      - SPARK_HISTORY_OPTS=-Dspark.history.fs.logDirectory=/tmp/spark-events
