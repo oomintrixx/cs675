@@ -1,5 +1,5 @@
 # Makefile
-.PHONY: up down shell test run-explore run-preprocess run-analytics download-data
+.PHONY: up down shell test run-explore run-preprocess run-analytics run-ml download-data download-zones run-ui
 
 up:
 	docker compose up -d
@@ -28,3 +28,6 @@ download-data:
 	     -o data/taxi/yellow_2022-01.parquet
 run-ml:
 	docker compose exec pyspark bash -c "cd /home/jovyan && python work/04_ml.py"
+
+download-zones:
+	./scripts/download_zone_lookup.sh
