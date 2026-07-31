@@ -26,3 +26,5 @@ download-data:
 	mkdir -p data/taxi
 	curl -L "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2022-01.parquet" \
 	     -o data/taxi/yellow_2022-01.parquet
+run-ml:
+	docker compose exec pyspark bash -c "cd /home/jovyan && python work/04_ml.py"
