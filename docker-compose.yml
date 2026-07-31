@@ -6,15 +6,17 @@ services:
       - ./work:/home/jovyan/work
       - ./tests:/home/jovyan/tests
       - ./data:/home/jovyan/data
+      - ./ui:/home/jovyan/ui
       - ./spark-events:/tmp/spark-events
     ports:
       - "4040:4040"
       - "18080:18080"
+      - "8501:8501"
     environment:
       - SPARK_MASTER=local[*]
       - JUPYTER_ENABLE_LAB=yes
       - PYTHONPATH=/home/jovyan:/usr/local/spark/python:/usr/local/spark/python/lib/py4j-0.10.9.7-src.zip
-    command: bash -c "pip install -q pytest==8.2.0 && start.sh jupyter lab --no-browser"
+    command: bash -c "pip install -q pytest==8.2.0 streamlit==1.37.0 && start.sh jupyter lab --no-browser"
   history:
     image: jupyter/pyspark-notebook:spark-3.5.0
     volumes:

@@ -31,3 +31,6 @@ run-ml:
 
 download-zones:
 	./scripts/download_zone_lookup.sh
+
+run-ui:
+	docker compose exec pyspark bash -c "cd /home/jovyan && streamlit run ui/predict_app.py --server.port 8501 --server.address 0.0.0.0"
