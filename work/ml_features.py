@@ -44,3 +44,31 @@ def build_features(df: DataFrame) -> DataFrame:
     )
     pipeline = Pipeline(stages=[pu_indexer, do_indexer, assembler])
     return pipeline.fit(df).transform(df)
+
+
+def build_pipeline(regressor) -> Pipeline:
+    """
+    Returns an untrained Pipeline: StringIndexer(PULocationID) + StringIndexer(DOLocationID)
+    + VectorAssembler(FEATURE_COLS) + the given regressor stage.
+
+    Unlike build_features(), this pipeline is meant to be fit once on raw
+    training data and saved whole — feature transform and model travel
+    together, so a loaded PipelineModel can predict directly from raw
+    input columns (no separately-tracked StringIndexer mapping needed).
+    """
+    pu_indexer = StringIndexer(
+        inputCol="PULocationID",
+        outputCol="pu_idx",
+        handleInvalid="keep",
+    )
+    do_indexer = StringIndexer(
+        inputCol="DOLocationID",
+        outputCol="do_idx",
+        handleInvalid="keep",
+    )
+    assembler = VectorAssembler(
+        inputCols=FEATURE_COLS,
+        outputCol="features",
+        handleInvalid="skip",
+    )
+    return Pipeline(stages=[pu_indexer, do_indexer, assembler, regressor])

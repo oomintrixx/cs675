@@ -62,3 +62,50 @@ class TestBuildFeatures:
         result = build_features(make_clean_rows(spark))
         assert "pu_idx" in result.columns
         assert "do_idx" in result.columns
+
+
+class TestBuildPipeline:
+    def test_produces_prediction_column(self, spark):
+        from work.ml_features import build_pipeline
+        from pyspark.ml.regression import LinearRegression
+
+        df = make_clean_rows(spark, n=5)
+        pipeline = build_pipeline(
+            LinearRegression(featuresCol="features", labelCol="total_amount")
+        )
+        model = pipeline.fit(df)
+        result = model.transform(df)
+        assert "prediction" in result.columns
+
+    def test_handles_unseen_zone_id_at_inference(self, spark):
+        from work.ml_features import build_pipeline
+        from pyspark.ml.regression import LinearRegression
+
+        train_df = make_clean_rows(spark, n=5)  # PULocationID/DOLocationID always 161/236
+        pipeline = build_pipeline(
+            LinearRegression(featuresCol="features", labelCol="total_amount")
+        )
+        model = pipeline.fit(train_df)
+
+        unseen_row = spark.createDataFrame([Row(
+            pickup_date=datetime.date(2022, 1, 15),
+            pickup_hour=10,
+            day_of_week=7,
+            time_of_day="morning",
+            PULocationID=999,
+            DOLocationID=999,
+            trip_distance=2.5,
+            distance_bucket="medium",
+            fare_amount=12.0,
+            fare_norm=0.5,
+            tip_amount=2.0,
+            total_amount=15.5,
+            passenger_count=1,
+            payment_type=1,
+            pay_credit_card=1,
+            pay_cash=0,
+            pay_no_charge=0,
+            dist_norm=0.5,
+        )])
+        result = model.transform(unseen_row)
+        assert result.count() == 1
