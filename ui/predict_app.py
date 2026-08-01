@@ -14,6 +14,7 @@ from work.predict_helpers import (
     load_best_model_name,
     zone_dropdown_options,
 )
+from ui.analytics_section import render_analytics_section
 
 st.set_page_config(page_title="Taxi Fare Predictor", page_icon="🚕")
 st.title("🚕 NYC Yellow Taxi — Predicted Total Amount")
@@ -86,3 +87,6 @@ if submitted:
         f"Served by {best_info['name'].upper()} — "
         f"RMSE ${best_info['rmse']:.2f}, R² {best_info['r2']:.4f}"
     )
+
+st.divider()
+render_analytics_section()
