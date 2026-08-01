@@ -11,6 +11,7 @@ SCRIPT="${1:?Usage: $0 <script_name>  e.g. 02_preprocess_cloud}"
 aws s3 cp "cloud/${SCRIPT}.py"        "s3://${BUCKET}/scripts/${SCRIPT}.py"        --profile "${PROFILE}"
 aws s3 cp "work/preprocess_steps.py"  "s3://${BUCKET}/scripts/preprocess_steps.py" --profile "${PROFILE}"
 aws s3 cp "work/analytics.py"         "s3://${BUCKET}/scripts/analytics.py"        --profile "${PROFILE}"
+aws s3 cp "work/ml_features.py"       "s3://${BUCKET}/scripts/ml_features.py"      --profile "${PROFILE}"
 
 echo "Submitting ${SCRIPT} to EMR Serverless..."
 RUN_ID=$(aws emr-serverless start-job-run \
@@ -20,7 +21,7 @@ RUN_ID=$(aws emr-serverless start-job-run \
   --job-driver "{
     \"sparkSubmit\": {
       \"entryPoint\": \"s3://${BUCKET}/scripts/${SCRIPT}.py\",
-      \"sparkSubmitParameters\": \"--py-files s3://${BUCKET}/scripts/preprocess_steps.py,s3://${BUCKET}/scripts/analytics.py --conf spark.emr-serverless.driverEnv.CS675_BUCKET=${BUCKET} --conf spark.executorEnv.CS675_BUCKET=${BUCKET} --conf spark.driver.cores=1 --conf spark.driver.memory=2g --conf spark.executor.cores=1 --conf spark.executor.memory=2g --conf spark.executor.instances=2 --conf spark.dynamicAllocation.enabled=false\"
+      \"sparkSubmitParameters\": \"--py-files s3://${BUCKET}/scripts/preprocess_steps.py,s3://${BUCKET}/scripts/analytics.py,s3://${BUCKET}/scripts/ml_features.py --conf spark.emr-serverless.driverEnv.CS675_BUCKET=${BUCKET} --conf spark.executorEnv.CS675_BUCKET=${BUCKET} --conf spark.driver.cores=1 --conf spark.driver.memory=2g --conf spark.executor.cores=1 --conf spark.executor.memory=2g --conf spark.executor.instances=2 --conf spark.dynamicAllocation.enabled=false\"
     }
   }" \
   --configuration-overrides "{
