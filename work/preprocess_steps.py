@@ -19,14 +19,20 @@ def impute(df: DataFrame) -> DataFrame:
 
 def remove_outliers(df: DataFrame) -> DataFrame:
     """
-    Drop trips with distance <= 0 (impossible) or negative fare.
-    Cap fare at $500 — the highest legitimate fare (JFK flat rate ~$70; >$500 is a data error).
-    Before: fare 0–$999,999. After: $0–$500.
+    Drop trips with distance <= 0 (impossible), negative fare, or negative
+    total (refund/adjustment rows — not a real trip cost to predict).
+    Cap fare at $500 and total at $600 — the highest legitimate fare (JFK
+    flat rate ~$70; >$500 is a data error), with headroom on the total for
+    tip on top of it. Uncapped, a handful of corrupt total_amount rows
+    (seen up to $401,095) dominate squared-error loss and blow up
+    tree-based models like GBT.
     """
     return (
         df.filter(col("trip_distance") > 0)
           .filter(col("fare_amount") >= 0)
+          .filter(col("total_amount") >= 0)
           .withColumn("fare_amount", least(col("fare_amount"), lit(500.0)))
+          .withColumn("total_amount", least(col("total_amount"), lit(600.0)))
     )
 
 

@@ -15,5 +15,6 @@ def get_spark(app_name: str = "cs675") -> SparkSession:
             .config("spark.eventLog.enabled", "true")
             .config("spark.eventLog.dir", "/tmp/spark-events")
             .config("spark.sql.shuffle.partitions", "8")
+            .config("spark.driver.memory", "4g")
         )
     return builder.getOrCreate()

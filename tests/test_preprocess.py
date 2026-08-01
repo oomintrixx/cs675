@@ -65,6 +65,16 @@ class TestOutlierRemoval:
         df = make_row(spark, fare_amount=9999.0)
         assert remove_outliers(df).first()["fare_amount"] == 500.0
 
+    def test_negative_total_dropped(self, spark):
+        from work.preprocess_steps import remove_outliers
+        df = make_row(spark, total_amount=-4.55)
+        assert remove_outliers(df).count() == 0
+
+    def test_extreme_total_capped_at_600(self, spark):
+        from work.preprocess_steps import remove_outliers
+        df = make_row(spark, total_amount=401095.62)
+        assert remove_outliers(df).first()["total_amount"] == 600.0
+
     def test_valid_row_kept(self, spark):
         from work.preprocess_steps import remove_outliers
         df = make_row(spark)
