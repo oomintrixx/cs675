@@ -10,5 +10,9 @@ BUCKET            = os.environ.get("CS675_BUCKET", "ds-student-workspace")
 CLOUD_TAXI_PATH   = f"s3://{BUCKET}/data/taxi/"
 CLOUD_OUTPUT_PATH = f"s3://{BUCKET}/output/"
 
-TAXI_PATH   = CLOUD_TAXI_PATH   if IS_CLOUD else LOCAL_TAXI_PATH
-OUTPUT_PATH = CLOUD_OUTPUT_PATH if IS_CLOUD else LOCAL_OUTPUT_PATH
+LOCAL_WEATHER_PATH = "/home/jovyan/data/weather_central_park.csv"
+CLOUD_WEATHER_PATH = f"s3://{BUCKET}/data/weather_central_park.csv"
+
+TAXI_PATH    = CLOUD_TAXI_PATH    if IS_CLOUD else LOCAL_TAXI_PATH
+OUTPUT_PATH  = CLOUD_OUTPUT_PATH  if IS_CLOUD else LOCAL_OUTPUT_PATH
+WEATHER_PATH = CLOUD_WEATHER_PATH if IS_CLOUD else LOCAL_WEATHER_PATH
