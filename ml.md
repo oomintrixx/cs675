@@ -2,7 +2,7 @@
 
 **Goal:** Train a LinearRegression baseline and a GBTRegressor to predict `total_amount` per trip from preprocessed Yellow Taxi data, compare RMSE and R² between the two models.
 
-**Architecture:** Reads from the already-preprocessed `taxi_clean/` Parquet produced by `work/02_preprocess.py`. A `build_features()` function runs StringIndexer on zone IDs and assembles all features into a single vector. Both models are trained locally on the Jan 2022 slice and saved to disk. The same scripts run on cloud against the full 260M-row dataset with `s3://` paths.
+**Architecture:** Reads from the already-preprocessed `taxi_clean/` Parquet produced by `work/02_preprocess.py`. A `build_features()` function runs StringIndexer on zone IDs and assembles all features into a single vector. Both models are trained locally on the Jan 2022 slice and saved to disk. The same scripts run on cloud against the full ~180M-row dataset with `s3://` paths.
 
 **Tech Stack:** PySpark 3.5 MLlib (StringIndexer, VectorAssembler, LinearRegression, GBTRegressor, RegressionEvaluator), pytest, Docker (local), AWS EMR Serverless (cloud)
 

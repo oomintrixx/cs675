@@ -6,7 +6,7 @@
 ## Dataset
 
 - **NYC TLC Yellow Taxi** (2019–2022)
-- ~260 million trips · 19 columns · Parquet format
+- ~180 million trips · 19 columns · Parquet format
 - Public data from TLC open data portal
 - Local dev: Jan 2022 slice (~2.5M rows, 37 MB)
 
@@ -153,7 +153,7 @@ ORDER BY 1;
 |-----------|------|---------|
 | Storage | AWS S3 | Stores all 48 Parquet files (2019–2022) |
 | SQL queries | AWS Athena + Glue catalog | Interactive analysis over S3 |
-| Batch compute | AWS EMR Serverless | Runs full PySpark pipeline at 260M-row scale |
+| Batch compute | AWS EMR Serverless | Runs full PySpark pipeline at 180M-row scale |
 | Infrastructure | Terraform | Reproducible provisioning + `terraform destroy` for cleanup |
 
 **Local → Cloud:** Same PySpark scripts, just swap local paths for `s3://` paths.

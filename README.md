@@ -1,6 +1,6 @@
 # CS-675 Final Project: NYC Yellow Taxi Analytics at Cloud Scale
 
-A PySpark pipeline for the NYC Yellow Taxi dataset. It's developed and tested locally against a single-month slice in Docker, and can be deployed at full scale (2019–2022, ~260M rows) to AWS using Terraform, S3, Glue/Athena, and EMR Serverless. Includes preprocessing, exploratory analytics, an ML fare-prediction model, and a Streamlit UI for interactive predictions.
+A PySpark pipeline for the NYC Yellow Taxi dataset. It's developed and tested locally against a single-month slice in Docker, and can be deployed at full scale (2019–2022, ~180M rows) to AWS using Terraform, S3, Glue/Athena, and EMR Serverless. Includes preprocessing, exploratory analytics, an ML fare-prediction model, and a Streamlit UI for interactive predictions.
 
 ## Overview
 
@@ -13,7 +13,36 @@ The pipeline takes raw NYC Yellow Taxi trip records (pickup/dropoff time, locati
 
 On top of that, a Spark ML pipeline trains and compares regression models to predict a trip's `total_amount`, and a Streamlit app lets you plug in trip details (zones, distance, time, passengers, payment method) to get a live fare prediction plus the analytics results, all served from the trained model.
 
-The same PySpark code runs two ways: locally in Docker against a ~3M-row single-month slice for fast iteration, and on AWS (S3 + Glue/Athena + EMR Serverless, provisioned via Terraform) against the full ~260M-row 2019–2022 dataset.
+The same PySpark code runs two ways: locally in Docker against a ~3M-row single-month slice for fast iteration, and on AWS (S3 + Glue/Athena + EMR Serverless, provisioned via Terraform) against the full ~180M-row 2019–2022 dataset.
+
+## Preprocessing: Before → After
+
+`work/preprocess_steps.py` runs six transforms — imputation, outlier removal, normalization, encoding, and two binning steps — shared unchanged between the local and cloud paths. Numbers below are measured, not estimated: the local figures come from reading `data/taxi/yellow_2022-01.parquet` and `data/output/taxi_clean/` directly; the full-scale raw count comes from summing the row-count metadata of all 48 source Parquet files (2019-01 → 2022-12) at the TLC CloudFront URLs in [Data Source](#data-source); the full-scale clean count is the actual EMR Serverless run recorded in [`analytics_results.md`](analytics_results.md).
+
+**Row-level impact**
+
+| Scope | Raw rows | Rows after preprocessing | Dropped | Drop rate |
+|---|---|---|---|---|
+| Local sample (Jan 2022) | 2,463,931 | 2,423,252 | 40,679 | 1.65% |
+| Full dataset (2019–2022, cloud) | 179,807,942 | 177,174,900 | 2,633,042 | 1.46% |
+
+Only outlier removal drops rows; imputation, normalization, encoding, and binning transform values in place. (Note: the true 2019–2022 Yellow Taxi volume is ~180M rows — earlier planning docs and the scope-review slides had estimated ~260M; this README uses the measured figure.)
+
+**Step-by-step justification** (measured on the Jan 2022 local sample)
+
+| Step | Function | Before | After | Rationale |
+|---|---|---|---|---|
+| Imputation | `impute()` | `passenger_count` null: 71,503 (2.90%) | filled with `1` | Solo rider is the modal value; a count field isn't a good candidate for mean/median imputation |
+| Imputation | `impute()` | `fare_amount` null: 0 (0.00% in this slice) | rows dropped if present | Primary ML target — can't be meaningfully imputed, so nulls are excluded rather than guessed |
+| Outlier removal | `remove_outliers()` | `trip_distance` ≤ 0: 29,373 rows (1.19%) | dropped | Zero/negative distance is a sensor or logging error, not a real trip |
+| Outlier removal | `remove_outliers()` | `fare_amount` < 0: 12,733 rows (0.52%) | dropped | Negative fares are refund/adjustment records, not trip cost |
+| Outlier removal | `remove_outliers()` | `total_amount` < 0: 12,934 rows (0.52%) | dropped | Same as above |
+| Outlier removal | `remove_outliers()` | `fare_amount` max $401,092.32 (9 rows > $500) | capped at $500 | Legitimate fares top out near JFK's ~$70 flat rate; uncapped, these 9 corrupt rows dominate squared-error loss in GBT/RF |
+| Outlier removal | `remove_outliers()` | `total_amount` max $401,095.62 (9 rows > $600) | capped at $600 | Same corrupt rows, capped with headroom for tip on top of fare |
+| Normalization | `normalize()` | `fare_amount`, `trip_distance` on raw dollar/mile scale | min-max scaled to [0, 1] (`fare_norm`, `dist_norm`) | Puts fare and distance on a comparable scale and enables cross-year comparison |
+| Encoding | `encode()` | `payment_type` int, 6 distinct codes (96.66% are 1/2/3) | one-hot flags `pay_credit_card` / `pay_cash` / `pay_no_charge` | Converts categorical codes to numeric features; the remaining 3.34% (voided/other codes) intentionally map to all-zero rather than inventing a 4th bucket |
+| Binning | `bin_distance()` | `trip_distance` continuous, 0–306,159 mi | `distance_bucket`: short (<1mi) / medium (1–10mi) / long (>10mi) | Buckets align with TLC's own fare-tier breakpoints; used throughout Q3/Q4 |
+| Binning | `bin_time_of_day()` | `pickup_hour` 0–23 | `time_of_day`: overnight / morning / afternoon / evening / night | Groups hours into behaviorally meaningful segments (commute vs. leisure vs. late-night) |
 
 ## Data Source
 

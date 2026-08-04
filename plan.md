@@ -2,7 +2,7 @@
 
 **Goal:** Build a PySpark analytics pipeline on NYC Yellow Taxi data — clean it locally with a monthly slice, then deploy to AWS at 100M+ row scale using S3 + Athena + EMR Serverless.
 
-**Architecture:** Local development uses Docker PySpark on a single-month taxi slice (~3M rows). Cloud deployment uses Terraform to provision S3 + Athena Glue catalog + EMR Serverless, uploads 2019–2022 full Yellow Taxi data (~260M rows), and runs the same PySpark jobs pointing at `s3://` paths.
+**Architecture:** Local development uses Docker PySpark on a single-month taxi slice (~3M rows). Cloud deployment uses Terraform to provision S3 + Athena Glue catalog + EMR Serverless, uploads 2019–2022 full Yellow Taxi data (~180M rows), and runs the same PySpark jobs pointing at `s3://` paths.
 
 **Tech Stack:** PySpark 3.5, Docker (local), AWS S3 + Athena + EMR Serverless + Glue, Terraform 1.5+, Python 3.12, pytest
 
@@ -1253,7 +1253,7 @@ git commit -m "feat: cloud PySpark scripts + EMR Serverless job runner"
 
 ## Overview
 
-Big-data analytics pipeline on NYC TLC Yellow Taxi data (2019–2022, ~260M trips).
+Big-data analytics pipeline on NYC TLC Yellow Taxi data (2019–2022, ~180M trips).
 Runs locally on a one-month slice for fast iteration, then deploys to AWS for full-scale results.
 
 **Dataset:** NYC TLC Yellow Taxi 2019–2022 — public Parquet files from TLC open data portal.
@@ -1270,7 +1270,7 @@ Runs locally on a one-month slice for fast iteration, then deploys to AWS for fu
 ## Tools Used
 
 - **PySpark 3.5** — local preprocessing and analytics
-- **AWS S3** — cloud storage for 260M-row dataset
+- **AWS S3** — cloud storage for 180M-row dataset
 - **AWS Athena** — interactive SQL over S3 Parquet
 - **AWS EMR Serverless** — cloud-scale PySpark job execution
 - **Terraform** — reproducible infrastructure provisioning
@@ -1357,7 +1357,7 @@ Expected: all tests pass.
 | Before/after justification | Task 8 — README table |
 | Multiple analytical queries | Task 4 — Q1–Q4 in `analytics.py` |
 | Cloud infrastructure (reproducible) | Task 5 — Terraform |
-| 100M+ rows at cloud scale | Tasks 6–7 — ~260M rows (2019–2022) |
+| 100M+ rows at cloud scale | Tasks 6–7 — ~180M rows (2019–2022) |
 | GitHub repo + README + run instructions | Task 8 |
 | Evaluate and discuss results | Task 8 — README results table (fill after Task 7) |
 | Two course tools | PySpark + AWS (Athena + EMR Serverless) |
