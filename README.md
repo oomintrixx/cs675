@@ -4,12 +4,13 @@ A PySpark pipeline for the NYC Yellow Taxi dataset. It's developed and tested lo
 
 ## Overview
 
-The pipeline takes raw NYC Yellow Taxi trip records (pickup/dropoff time, location, distance, fare, tip, payment type, etc.), cleans and transforms them, then answers four research questions:
+The pipeline takes raw NYC Yellow Taxi trip records (pickup/dropoff time, location, distance, fare, tip, payment type, etc.), cleans and transforms them, then answers five research questions:
 
 1. How does trip demand vary by hour of day and day of week?
 2. Which pickup zones generate the most revenue and trips?
 3. Does tipping behavior differ across trip distance buckets (short / medium / long)?
 4. How does fare-per-mile vary across distance buckets — do short trips cost more per mile?
+5. Does trip demand or average fare change on rainy or snowy days? (joined against NOAA daily weather — the project's cross-source join)
 
 On top of that, a Spark ML pipeline trains and compares regression models to predict a trip's `total_amount`, and a Streamlit app lets you plug in trip details (zones, distance, time, passengers, payment method) to get a live fare prediction plus the analytics results, all served from the trained model.
 
@@ -44,6 +45,12 @@ Only outlier removal drops rows; imputation, normalization, encoding, and binnin
 | Binning | `bin_distance()` | `trip_distance` continuous, 0–306,159 mi | `distance_bucket`: short (<1mi) / medium (1–10mi) / long (>10mi) | Buckets align with TLC's own fare-tier breakpoints; used throughout Q3/Q4 |
 | Binning | `bin_time_of_day()` | `pickup_hour` 0–23 | `time_of_day`: overnight / morning / afternoon / evening / night | Groups hours into behaviorally meaningful segments (commute vs. leisure vs. late-night) |
 
+## Cross-Source Join: Weather (Q5)
+
+`work/weather_helpers.py` loads NOAA GHCN-Daily daily weather for NYC (Central Park station `USW00094728`) and buckets each day into `clear` / `rain` / `snow`. `query_demand_by_weather()` in `work/analytics.py` joins this against the cleaned taxi trips on `pickup_date`, broadcasting the weather side (a few hundred to ~1,461 rows) against the taxi fact table (millions of rows) to avoid a shuffle — a standard big-data join pattern for a large-fact/small-dimension join.
+
+Run locally with `make download-weather` before `make run-analytics`. Results: [`results/q5_weather_demand.csv`](results/q5_weather_demand.csv), discussed in [`analytics_results.md`](analytics_results.md).
+
 ## Data Source
 
 Raw trip data is the public **NYC TLC Yellow Taxi Trip Records**, published by the NYC Taxi & Limousine Commission:
@@ -51,8 +58,9 @@ Raw trip data is the public **NYC TLC Yellow Taxi Trip Records**, published by t
 - Official dataset page: https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page
 - Raw Parquet files (used by `scripts/download_full_data.sh`): `https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_YYYY-MM.parquet`
 - Taxi zone lookup table (used by `scripts/download_zone_lookup.sh`): https://d37ci6vzurychx.cloudfront.net/misc/taxi_zone_lookup.csv
+- Daily weather (used by `scripts/download_weather.sh`): NOAA GHCN-Daily, NYC Central Park station (`USW00094728`) — `https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00094728.csv`
 
-`make download-data` / `make download-zones` (local) and `scripts/download_full_data.sh` (cloud) fetch these directly — no manual download needed.
+`make download-data` / `make download-zones` / `make download-weather` (local) and `scripts/download_full_data.sh` (cloud) fetch these directly — no manual download needed.
 
 ## Prerequisites
 
@@ -87,6 +95,7 @@ Python dependencies (`pyspark`, `pytest`, `streamlit`, `pandas` — see `pyproje
    ```bash
    make download-data    # one month (2022-01) of Yellow Taxi trip data, for local dev
    make download-zones   # taxi zone lookup table (LocationID -> Borough/Zone)
+   make download-weather # NOAA daily weather for NYC (Central Park station), for Q5
    ```
 
 3. **Run the pipeline** (each step runs inside the `pyspark` container):
@@ -94,7 +103,7 @@ Python dependencies (`pyspark`, `pytest`, `streamlit`, `pandas` — see `pyproje
    ```bash
    make run-explore     # profile raw schema, row counts, null counts
    make run-preprocess  # clean + transform data (work/02_preprocess.py)
-   make run-analytics   # run the 4 analytical queries, write results/*.csv
+   make run-analytics   # run the 5 analytical queries, write results/*.csv
    make run-ml          # train models, write best model + metrics to data/output/models/
    ```
 
@@ -167,7 +176,7 @@ The same PySpark logic (`work/preprocess_steps.py`, `work/analytics.py`, `work/m
 | `infrastructure/` | Terraform config for S3, Glue/Athena, EMR Serverless, IAM |
 | `scripts/` | Data/zone-lookup download helpers |
 | `tests/` | Pytest unit tests (Spark fixture in `conftest.py`) |
-| `results/` | Output CSVs from the 4 analytical queries |
+| `results/` | Output CSVs from the 5 analytical queries |
 | `data/` | Local dataset storage (gitignored) |
 | `plan.md`, `ml.md`, `analytics_results.md`, `presentation.md` | Design notes, ML write-up, results summary, presentation script |
 

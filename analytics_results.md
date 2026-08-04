@@ -75,3 +75,15 @@ Confirms the expected base-fare effect: short trips cost ~6x more per mile
 than long trips because the flat base fare dominates the total for short
 distances, while long trips (often airport runs, given Q2) amortize it over
 many more miles.
+
+## Q5 — Demand by Weather Condition (local sample)
+
+`results/q5_weather_demand.csv` — computed on the **local Jan 2022 sample** (not the full cloud-scale run), joined against NOAA daily weather for NYC Central Park.
+
+| Weather condition | Trip count | Avg fare | Avg distance |
+|---|---|---|---|
+| clear | 1,670,147 | $12.56 | 5.07 mi |
+| rain | 407,351 | $13.68 | 6.49 mi |
+| snow | 345,742 | $12.72 | 6.09 mi |
+
+Demand drops sharply once weather turns bad: 69% of trips happen on clear days versus 17% on rain and 14% on snow — fewer people are out and about to hail a cab. But the trips that do happen skew longer and pricier: average fare rises from $12.56 on clear days to $13.68 (rain) and $12.72 (snow), and average distance jumps from 5.07mi to 6.49mi/6.09mi. That's consistent with riders reserving cabs for longer or harder-to-walk trips in bad weather rather than the short local hops that pad out clear-day volume.
