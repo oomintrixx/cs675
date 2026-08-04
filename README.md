@@ -15,6 +15,16 @@ On top of that, a Spark ML pipeline trains and compares regression models to pre
 
 The same PySpark code runs two ways: locally in Docker against a ~3M-row single-month slice for fast iteration, and on AWS (S3 + Glue/Athena + EMR Serverless, provisioned via Terraform) against the full ~260M-row 2019–2022 dataset.
 
+## Data Source
+
+Raw trip data is the public **NYC TLC Yellow Taxi Trip Records**, published by the NYC Taxi & Limousine Commission:
+
+- Official dataset page: https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page
+- Raw Parquet files (used by `scripts/download_full_data.sh`): `https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_YYYY-MM.parquet`
+- Taxi zone lookup table (used by `scripts/download_zone_lookup.sh`): https://d37ci6vzurychx.cloudfront.net/misc/taxi_zone_lookup.csv
+
+`make download-data` / `make download-zones` (local) and `scripts/download_full_data.sh` (cloud) fetch these directly — no manual download needed.
+
 ## Prerequisites
 
 **For local development:**
@@ -58,6 +68,8 @@ Python dependencies (`pyspark`, `pytest`, `streamlit`, `pandas` — see `pyproje
    make run-analytics   # run the 4 analytical queries, write results/*.csv
    make run-ml          # train models, write best model + metrics to data/output/models/
    ```
+
+   Trained models (LR/RF/GBT) and `metrics.json` are also committed under `data/output/models/` so the prediction UI works out of the box without re-running `make run-ml`.
 
 4. **Run the tests**
 

@@ -2,5 +2,9 @@ infrastructure/terraform.tfvars
 infrastructure/.terraform/
 infrastructure/terraform.tfstate*
 infrastructure/.terraform.lock.hcl
-data/
+data/*
+!data/output/
+data/output/*
+!data/output/models/
+*.crc
 spark-events/
