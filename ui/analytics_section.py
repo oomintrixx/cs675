@@ -19,8 +19,9 @@ def _load_results():
     zones = pd.read_csv("results/q2_zone_revenue.csv")
     tipping = pd.read_csv("results/q3_tipping_by_distance.csv")
     fare_per_mile = pd.read_csv("results/q4_fare_per_mile.csv")
+    weather = pd.read_csv("results/q5_weather_demand.csv")
     zone_lookup = pd.read_csv("data/taxi_zone_lookup.csv")
-    return hourly, zones, tipping, fare_per_mile, zone_lookup
+    return hourly, zones, tipping, fare_per_mile, weather, zone_lookup
 
 
 def render_analytics_section() -> None:
@@ -28,7 +29,7 @@ def render_analytics_section() -> None:
     st.caption("Computed at cloud scale (~177M trips) via PySpark on EMR Serverless.")
 
     try:
-        hourly, zones, tipping, fare_per_mile, zone_lookup = _load_results()
+        hourly, zones, tipping, fare_per_mile, weather, zone_lookup = _load_results()
     except FileNotFoundError:
         st.warning(
             "Analytics results not found under `results/` or "
@@ -123,3 +124,23 @@ def render_analytics_section() -> None:
     )
     st.altair_chart(fare_bar, use_container_width=True)
     st.dataframe(fare_ordered, use_container_width=True)
+
+    st.subheader("Q5 — Demand by weather condition")
+    st.write(
+        "Joined against NOAA daily weather for NYC (Central Park station): "
+        "1,670,147 trips on clear days vs. 407,351 on rainy days and "
+        "345,742 on snowy days in the Jan 2022 local sample, with average "
+        "fare of $12.56 on clear days."
+    )
+    weather_bar = (
+        alt.Chart(weather)
+        .mark_bar(color=ACCENT)
+        .encode(
+            x=alt.X("weather_condition:N", sort=["clear", "rain", "snow"], title="Weather condition"),
+            y=alt.Y("trip_count:Q", title="Trips"),
+            tooltip=["weather_condition", "trip_count", "avg_fare", "avg_distance"],
+        )
+        .properties(height=260)
+    )
+    st.altair_chart(weather_bar, use_container_width=True)
+    st.dataframe(weather, use_container_width=True)
