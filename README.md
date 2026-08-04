@@ -155,6 +155,8 @@ The same PySpark logic (`work/preprocess_steps.py`, `work/analytics.py`, `work/m
 
    Downloads and uploads 48 months (2019–2022) of Yellow Taxi Parquet files to `s3://$CS675_BUCKET/data/taxi/year=YYYY/month=MM/`.
 
+   `scripts/download_weather.sh` similarly uploads `data/weather_central_park.csv` to `s3://$CS675_BUCKET/data/weather_central_park.csv` whenever `CS675_BUCKET` is set — required for `cloud/03_analytics_cloud.py`'s Q5 join to find the file.
+
 3. **Submit a job to EMR Serverless**
 
    ```bash

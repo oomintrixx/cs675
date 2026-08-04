@@ -126,11 +126,20 @@ def render_analytics_section() -> None:
     st.dataframe(fare_ordered, use_container_width=True)
 
     st.subheader("Q5 — Demand by weather condition")
+    st.caption("Local Jan 2022 sample — computed separately from the Q1-Q4 cloud-scale run.")
     st.write(
-        "Joined against NOAA daily weather for NYC (Central Park station): "
-        "1,670,147 trips on clear days vs. 407,351 on rainy days and "
-        "345,742 on snowy days in the Jan 2022 local sample, with average "
-        "fare of $12.56 on clear days."
+        "Raw trip counts (1,670,147 clear vs. 407,351 rain vs. 345,742 snow) "
+        "mostly just track how many days of each type occurred that month "
+        "(20 clear / 6 rain / 5 snow). Normalizing to trips/day isolates the "
+        "real demand effect: ~83,500 trips/day on clear days vs. ~67,900/day "
+        "on rain (-19%) and ~69,100/day on snow (-17%). Avg fare rises "
+        "genuinely too — $12.56 (clear) to $13.68 (rain) / $12.72 (snow), a "
+        "robust number since fare is capped in preprocessing. Avg distance "
+        "is less trustworthy: trip_distance isn't capped, and a handful of "
+        "outlier trips (up to 306,159 mi) inflate the mean. The median "
+        "(1.73 / 1.89 / 1.80 mi) shows only a modest, real rain increase — "
+        "the apparent snow-distance effect mostly disappears once outliers "
+        "are excluded."
     )
     weather_bar = (
         alt.Chart(weather)

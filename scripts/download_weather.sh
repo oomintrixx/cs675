@@ -16,3 +16,8 @@ for row in csv.DictReader(sys.stdin):
 " > data/weather_central_park.csv
 
 echo "Done. Saved to data/weather_central_park.csv"
+
+if [ -n "$CS675_BUCKET" ]; then
+  aws s3 cp data/weather_central_park.csv "s3://${CS675_BUCKET}/data/weather_central_park.csv" --profile "${AWS_PROFILE:-ds}"
+  echo "Uploaded to s3://${CS675_BUCKET}/data/weather_central_park.csv"
+fi
