@@ -1,6 +1,6 @@
 # work/analytics.py
 from pyspark.sql import DataFrame
-from pyspark.sql.functions import col, avg, count, sum as spark_sum, round as spark_round
+from pyspark.sql.functions import col, avg, count, sum as spark_sum, round as spark_round, broadcast
 
 
 def query_hourly_demand(df: DataFrame) -> DataFrame:
@@ -62,4 +62,24 @@ def query_fare_per_mile(df: DataFrame) -> DataFrame:
               count("*").alias("trip_count"),
           )
           .orderBy("distance_bucket")
+    )
+
+
+def query_demand_by_weather(taxi_df: DataFrame, weather_df: DataFrame) -> DataFrame:
+    """
+    Q5: Trip demand and avg fare/distance by daily weather condition
+    (clear/rain/snow). Cross-source join: taxi trips (fact table, millions+
+    rows) to NOAA daily weather (dimension table, ~1,461 rows) on
+    pickup_date == DATE. weather_df is broadcast rather than shuffled since
+    it's tiny relative to the taxi side.
+    """
+    return (
+        taxi_df.join(broadcast(weather_df), taxi_df["pickup_date"] == weather_df["DATE"])
+               .groupBy("weather_condition")
+               .agg(
+                   count("*").alias("trip_count"),
+                   spark_round(avg("fare_amount"), 2).alias("avg_fare"),
+                   spark_round(avg("trip_distance"), 2).alias("avg_distance"),
+               )
+               .orderBy("weather_condition")
     )
