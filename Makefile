@@ -1,5 +1,5 @@
 # Makefile
-.PHONY: up down shell test run-explore run-preprocess run-analytics run-ml download-data download-zones run-ui
+.PHONY: up down shell test run-explore run-preprocess run-analytics run-ml download-data download-zones download-weather run-ui
 
 up:
 	docker compose up -d
@@ -31,6 +31,9 @@ run-ml:
 
 download-zones:
 	./scripts/download_zone_lookup.sh
+
+download-weather:
+	./scripts/download_weather.sh
 
 run-ui:
 	docker compose exec pyspark bash -c "cd /home/jovyan && streamlit run ui/predict_app.py --server.port 8501 --server.address 0.0.0.0"
