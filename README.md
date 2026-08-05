@@ -131,6 +131,8 @@ make run-ui
 
 Open http://localhost:8501, fill in trip details, and click "Predict" to see the estimated `total_amount` from the best-performing trained model. The page also shows the analytics results (tables + charts) from the queries run in `make run-analytics`.
 
+![Prediction UI screenshot](docs/images/prediction-ui.png)
+
 ## Cloud Deployment (AWS)
 
 The same PySpark logic (`work/preprocess_steps.py`, `work/analytics.py`, `work/ml_features.py`) runs against `s3://` paths via the `cloud/*_cloud.py` entry points, switched on by setting `CS675_ENV=cloud`.
