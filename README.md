@@ -2,6 +2,8 @@
 
 A PySpark pipeline for the NYC Yellow Taxi dataset. It's developed and tested locally against a single-month slice in Docker, and can be deployed at full scale (2019–2022, ~180M rows) to AWS using Terraform, S3, Glue/Athena, and EMR Serverless. Includes preprocessing, exploratory analytics, an ML fare-prediction model, and a Streamlit UI for interactive predictions.
 
+See [`REQUIREMENTS.md`](REQUIREMENTS.md) for a checklist mapping every item in the assignment spec to where it's covered in this repo.
+
 ## Overview
 
 The pipeline takes raw NYC Yellow Taxi trip records (pickup/dropoff time, location, distance, fare, tip, payment type, etc.), cleans and transforms them, then answers five research questions:
@@ -183,6 +185,7 @@ The same PySpark logic (`work/preprocess_steps.py`, `work/analytics.py`, `work/m
 | `results/` | Output CSVs from the 5 analytical queries |
 | `data/` | Local dataset storage (gitignored) |
 | `plan.md`, `ml.md`, `analytics_results.md`, `presentation.md` | Design notes, ML write-up, results summary, presentation script |
+| `REQUIREMENTS.md` | Checklist mapping assignment requirements to where they're covered in this repo |
 
 ## Environment Variables
 
