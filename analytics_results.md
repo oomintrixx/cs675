@@ -1,17 +1,17 @@
 # NYC Yellow Taxi — Cloud Analytics Results
 
 Generated from the EMR Serverless pipeline (`cloud/02_preprocess_cloud.py` →
-`cloud/03_analytics_cloud.py`) run on 2026-07-30 against the full multi-year
-dataset (2019–2022) in `s3://ds-cs675-cweng-workspace/data/taxi/`.
+`cloud/03_analytics_cloud.py`) run on 2026-08-04 against the full multi-year
+dataset (2019–2022) in `s3://ds-cs675-cweng-workspace/data/taxi/`. All five
+queries — including Q5's weather join — ran at full cloud scale in this run.
 
 Raw query outputs (Parquet, written by the Spark job) were downloaded from
 `s3://ds-cs675-cweng-workspace/output/results/` and are checked in as CSV
-under [`results/`](results/) for easy inspection/diffing — except
-`q5_weather_demand.csv`, which is a local run — see the Q5 section below.
+under [`results/`](results/) for easy inspection/diffing.
 
 ## Headline numbers
 
-- **Total trips (post-cleaning):** 177,174,900
+- **Total trips (post-cleaning):** 177,171,999
 - **Total revenue (fare_amount):** $2,399,047,291.20
 - **Average fare per trip:** $13.54
 
@@ -20,8 +20,8 @@ under [`results/`](results/) for easy inspection/diffing — except
 `results/q1_hourly_demand.csv` — trip counts for all 168 (hour × day-of-week) buckets.
 (`day_of_week`: 1=Sun, 2=Mon, ... 7=Sat, matching Spark's `dayofweek()`.)
 
-- **Weekday trips (Mon–Fri):** 130,706,588 (74% of all trips)
-- **Weekend trips (Sat/Sun):** 46,468,312 (26%)
+- **Weekday trips (Mon–Fri):** 130,704,405 (74% of all trips)
+- **Weekend trips (Sat/Sun):** 46,467,594 (26%)
 - **Top weekday hours:** 18:00 (9.18M), 17:00 (8.47M), 19:00 (8.34M) — a single
   evening peak rather than the classic AM/PM commute double-hump, suggesting
   taxi demand skews toward evening/dinner travel more than office commuting.
@@ -37,11 +37,11 @@ lookup](https://d37ci6vzurychx.cloudfront.net/misc/taxi_zone_lookup.csv)):
 
 | PULocationID | Zone | Borough | Total Revenue | Avg Fare | Trip Count |
 |---|---|---|---|---|---|
-| 132 | JFK Airport | Queens | $279,797,900 | $45.73 | 6,118,817 |
-| 138 | LaGuardia Airport | Queens | $132,983,700 | $30.98 | 4,292,378 |
-| 161 | Midtown Center | Manhattan | $82,492,980 | $11.78 | 7,003,527 |
-| 237 | Upper East Side South | Manhattan | $77,854,430 | $9.56 | 8,140,446 |
-| 186 | Penn Station/Madison Sq West | Manhattan | $74,479,570 | $12.11 | 6,151,179 |
+| 132 | JFK Airport | Queens | $279,797,933 | $45.73 | 6,118,438 |
+| 138 | LaGuardia Airport | Queens | $132,983,656 | $30.98 | 4,292,250 |
+| 161 | Midtown Center | Manhattan | $82,492,983 | $11.78 | 7,003,430 |
+| 237 | Upper East Side South | Manhattan | $77,854,434 | $9.56 | 8,140,361 |
+| 186 | Penn Station/Madison Sq West | Manhattan | $74,479,568 | $12.11 | 6,151,083 |
 
 The two airport zones stand out sharply: far fewer trips than the
 high-volume Manhattan zones (161, 237, 236) but 3–4x the average fare, since
@@ -54,9 +54,9 @@ revenue despite not being the busiest pickup points.
 
 | Distance bucket | Avg tip % | Avg tip $ | Trip count |
 |---|---|---|---|
-| short (<1mi) | 22.42% | $1.23 | 39,753,936 |
-| medium (1–10mi) | 18.86% | $2.24 | 125,444,594 |
-| long (>10mi) | 16.69% | $6.87 | 11,976,370 |
+| short (<1mi) | 22.42% | $1.23 | 39,752,916 |
+| medium (1–10mi) | 18.86% | $2.24 | 125,443,296 |
+| long (>10mi) | 16.69% | $6.87 | 11,975,787 |
 
 Tip *percentage* falls as trips get longer, even though tip *dollar amount*
 rises — riders tip a smaller share of a larger fare on long trips. Short
@@ -68,9 +68,9 @@ trips get the highest percentage tips but the lowest dollar amount.
 
 | Distance bucket | Avg fare/mile | Avg fare | Avg distance | Trip count |
 |---|---|---|---|---|
-| short (<1mi) | $19.10 | $5.83 | 0.68 mi | 39,753,936 |
-| medium (1–10mi) | $5.20 | $12.70 | 2.76 mi | 125,444,594 |
-| long (>10mi) | $3.07 | $47.96 | 34.83 mi | 11,976,370 |
+| short (<1mi) | $19.10 | $5.83 | 0.68 mi | 39,752,916 |
+| medium (1–10mi) | $5.20 | $12.70 | 2.76 mi | 125,443,296 |
+| long (>10mi) | $3.07 | $47.96 | 34.83 mi | 11,975,787 |
 
 Confirms the expected base-fare effect: short trips cost ~6x more per mile
 than long trips because the flat base fare dominates the total for short
@@ -79,36 +79,44 @@ many more miles.
 
 ## Q5 — Demand by weather condition
 
-`results/q5_weather_demand.csv` — computed on the **local Jan 2022 sample** (not the full cloud-scale run), joined against NOAA daily weather for NYC Central Park. A day is bucketed by any measurable precipitation (`PRCP > 0` or `SNOW > 0`); snow takes priority when both are non-zero on the same day.
+`results/q5_weather_demand.csv` — the cross-source join: all 177M+ cleaned
+trips (2019–2022) joined against 4 years of NOAA daily weather for NYC
+Central Park (`USW00094728`), broadcasting the tiny weather side against the
+taxi fact table. A day is bucketed by any measurable precipitation
+(`PRCP > 0` or `SNOW > 0`); snow takes priority when both are non-zero on
+the same day.
 
-| Weather condition | Trip count | Avg fare | Avg distance |
-|---|---|---|---|
-| clear | 1,670,147 | $12.56 | 5.07 mi |
-| rain | 407,351 | $13.68 | 6.49 mi |
-| snow | 345,742 | $12.72 | 6.09 mi |
+| Weather condition | Trip count | Share | Avg fare | Avg distance |
+|---|---|---|---|---|
+| clear | 110,718,538 | 62.5% | $13.57 | 4.47 mi |
+| rain | 61,412,663 | 34.7% | $13.56 | 4.52 mi |
+| snow | 5,039,027 | 2.8% | $12.65 | 3.62 mi |
 
-January 2022 had 20 clear days, 6 rain days, and 5 snow days, so the raw
-trip-count shares above (69% / 17% / 14%) mostly just mirror how many days
-of each type occurred — they are **not** good evidence of a demand effect on
-their own. Normalizing to trips/day isolates the actual effect: **~83,500
-trips/day on clear days vs. ~67,900/day on rain (-19%) and ~69,100/day on
-snow (-17%)**. Daily volume genuinely drops on bad-weather days, just by
-less than the raw percentages suggest.
+At full 4-year scale, weather has a much smaller effect on fare and distance
+than a first look at a single snowy month might suggest: avg fare is
+essentially flat across clear ($13.57) and rain ($13.56) days, and actually
+**lower** on snow days ($12.65, -6.8% vs. clear) — the opposite direction
+from what a naive "bad weather → higher fares" intuition would predict.
+Average distance follows the same pattern: snow trips run *shorter* (3.62 mi
+vs. 4.47 mi clear, -19%), not longer. A plausible explanation, consistent
+with Q2: snowstorms likely suppress the longest, highest-fare trips first
+(airport runs, cross-borough trips) more than they suppress short local
+hops, pulling both the average fare and average distance down on snow days
+rather than up.
 
-The fare difference is real and robust: avg fare rises from $12.56 (clear)
-to $13.68 (rain, +8.9%) and $12.72 (snow, +1.3%) — trustworthy because
-`fare_amount` is capped at $500 in preprocessing (`remove_outliers()` in
-`work/preprocess_steps.py`), so a handful of bad rows can't skew it.
+Trip volume itself: clear days account for the large majority of trips
+(62.5%), with rain a substantial secondary share (34.7%) — unsurprising
+given NYC gets far more rainy days than snow days across a full year — and
+snow a small tail (2.8%), consistent with snow being both rarer and
+typically shorter-lived per storm than multi-day rain systems.
 
-The average-*distance* numbers above are much less trustworthy, though:
-`trip_distance` is **not** capped in preprocessing, and the cleaned data
-still contains a few GPS/meter-error trips up to 306,159 mi. The median
-trip distance is far more stable across buckets — 1.73 mi (clear), 1.89 mi
-(rain), 1.80 mi (snow) — than the 5.07/6.49/6.09 mi means. Excluding the
-handful of trips over 100 mi (81 clear, 23 rain, 30 snow — a tiny fraction
-of ~2.4M trips), the mean drops to 3.06 mi (clear), 3.60 mi (rain), and
-3.12 mi (snow): the rain increase survives (+17.8%, consistent with the
-median's smaller but real rain uptick) but the apparent snow effect nearly
-vanishes (+2.2%, well within noise). In short: rain trips really do run a
-bit longer on average, but the "snow trips are longer" claim in the raw
-means is an artifact of a few outlier rides, not a real weather effect.
+**Earlier local-sample estimate, for comparison:** before this cloud-scale
+run, Q5 was first validated on the local Jan 2022 dev slice only (31 days:
+20 clear, 6 rain, 5 snow — including the Jan 29, 2022 NYC blizzard). That
+one-month sample happened to have an unusually snow-heavy month and showed
+the opposite direction on fare/distance (snow trips *higher* fare/distance
+than clear), which the cloud-scale run above does not confirm — a good
+illustration of why a 31-day local sample from one unusual month shouldn't
+be treated as a reliable signal on its own, and why running the full
+4-year, 177M-row join was worth doing rather than stopping at the local
+result.

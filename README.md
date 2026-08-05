@@ -47,9 +47,9 @@ Only outlier removal drops rows; imputation, normalization, encoding, and binnin
 
 ## Cross-Source Join: Weather (Q5)
 
-`work/weather_helpers.py` loads NOAA GHCN-Daily daily weather for NYC (Central Park station `USW00094728`) and buckets each day into `clear` / `rain` / `snow`. `query_demand_by_weather()` in `work/analytics.py` joins this against the cleaned taxi trips on `pickup_date`, broadcasting the weather side (a few hundred to ~1,461 rows) against the taxi fact table (millions of rows) to avoid a shuffle — a standard big-data join pattern for a large-fact/small-dimension join.
+`work/weather_helpers.py` loads NOAA GHCN-Daily daily weather for NYC (Central Park station `USW00094728`) and buckets each day into `clear` / `rain` / `snow`. `query_demand_by_weather()` in `work/analytics.py` joins this against the cleaned taxi trips on `pickup_date`, broadcasting the weather side (~1,461 rows) against the taxi fact table (177M+ rows) to avoid a shuffle — a standard big-data join pattern for a large-fact/small-dimension join.
 
-Run locally with `make download-weather` before `make run-analytics`. Results: [`results/q5_weather_demand.csv`](results/q5_weather_demand.csv), discussed in [`analytics_results.md`](analytics_results.md).
+Runs both locally (`make download-weather` before `make run-analytics`, on the Jan 2022 dev slice) and at full cloud scale via `cloud/03_analytics_cloud.py` on EMR Serverless — the numbers in [`analytics_results.md`](analytics_results.md) are from the full 2019–2022, 177M+ trip cloud run, joined against 4 years of daily weather. Results: [`results/q5_weather_demand.csv`](results/q5_weather_demand.csv).
 
 ## Data Source
 

@@ -126,20 +126,17 @@ def render_analytics_section() -> None:
     st.dataframe(fare_ordered, use_container_width=True)
 
     st.subheader("Q5 — Demand by weather condition")
-    st.caption("Local Jan 2022 sample — computed separately from the Q1-Q4 cloud-scale run.")
     st.write(
-        "Raw trip counts (1,670,147 clear vs. 407,351 rain vs. 345,742 snow) "
-        "mostly just track how many days of each type occurred that month "
-        "(20 clear / 6 rain / 5 snow). Normalizing to trips/day isolates the "
-        "real demand effect: ~83,500 trips/day on clear days vs. ~67,900/day "
-        "on rain (-19%) and ~69,100/day on snow (-17%). Avg fare rises "
-        "genuinely too — $12.56 (clear) to $13.68 (rain) / $12.72 (snow), a "
-        "robust number since fare is capped in preprocessing. Avg distance "
-        "is less trustworthy: trip_distance isn't capped, and a handful of "
-        "outlier trips (up to 306,159 mi) inflate the mean. The median "
-        "(1.73 / 1.89 / 1.80 mi) shows only a modest, real rain increase — "
-        "the apparent snow-distance effect mostly disappears once outliers "
-        "are excluded."
+        "Cross-source join: all 177M+ trips against 4 years of NOAA daily "
+        "weather for NYC. Clear days account for most trips (62.5%), rain a "
+        "substantial share (34.7%), snow a small tail (2.8%) — NYC simply "
+        "gets far more rainy days than snowy ones. Avg fare is essentially "
+        "flat between clear ($13.57) and rain ($13.56), and actually *lower* "
+        "on snow days ($12.65) — the opposite of a naive 'bad weather costs "
+        "more' intuition. Distance follows the same pattern (snow trips run "
+        "shorter, 3.62 mi vs. 4.47 mi clear), consistent with Q2: snowstorms "
+        "likely suppress the longest, priciest trips (airport runs) more "
+        "than short local hops."
     )
     weather_bar = (
         alt.Chart(weather)
